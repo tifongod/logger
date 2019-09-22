@@ -32,6 +32,7 @@ type RequestUIDKey string
 func GetLogger(config LoggerConfig) (*Logger, error) {
 	l := &Logger{}
 
+	l.Config = config
 	in := make(chan messages, config.Buffer)
 	l.Msg = in
 
