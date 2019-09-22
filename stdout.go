@@ -1,15 +1,14 @@
 package logger
 
 import (
-	"io"
+	"fmt"
 )
 
 type STDOUTDriver struct {
-	Writer io.Writer
 }
 
-func (s *STDOUTDriver)PutMsg(msg []byte) error {
-	_, err := s.Writer.Write(msg)
+func (s *STDOUTDriver) PutMsg(msg []byte) error {
+	fmt.Println(string(msg))
 
-	return err
+	return nil
 }
