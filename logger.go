@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/satori/go.uuid"
@@ -20,11 +22,12 @@ type messages struct {
 }
 
 type message struct {
-	Time      string
-	RequestId string
-	Code      string
-	Data      interface{}
-	Ctx       context.Context
+	Time      string          `json:"time"`
+	RequestId string          `json:"requestId"`
+	Code      string          `json:"code"`
+	Trace     []string        `json:"trace"`
+	Data      interface{}     `json:"data"`
+	Ctx       context.Context `json:"ctx"`
 }
 
 type RequestUIDKey string
@@ -103,6 +106,8 @@ func (l *Logger) genMessage(ctx context.Context, level int, data interface{}) me
 		}
 	}
 
+	trace := string(debug.Stack())
+
 	msg := messages{
 		Level: level,
 		Msg: message{
@@ -110,6 +115,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, data interface{}) me
 			Code:      code,
 			RequestId: requestId,
 			Data:      data,
+			Trace:     strings.Split(trace, "\n"),
 			Ctx:       ctx,
 		},
 	}
