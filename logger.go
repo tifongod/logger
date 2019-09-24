@@ -17,10 +17,10 @@ type Logger struct {
 
 type messages struct {
 	Level int
-	Msg   message
+	Msg   Message
 }
 
-type message struct {
+type Message struct {
 	Time      string          `json:"time"`
 	RequestId string          `json:"requestId"`
 	Code      string          `json:"code"`
@@ -102,7 +102,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, data interface{}) me
 
 	msg := messages{
 		Level: level,
-		Msg: message{
+		Msg: Message{
 			Time:      time.Now().UTC().Format("2006-01-02 15:04:05"),
 			Code:      code,
 			RequestId: requestId,

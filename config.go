@@ -15,5 +15,5 @@ type LoggerConfig struct {
 }
 
 type LogDriver interface {
-	PutMsg(msg message) error
+	PutMsg(msg Message) error
 }
