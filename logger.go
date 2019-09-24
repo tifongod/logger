@@ -2,7 +2,6 @@ package logger
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"runtime/debug"
 	"strings"
@@ -32,6 +31,7 @@ type message struct {
 
 type RequestUIDKey string
 
+// GetLogger получение инстанса логгер
 func GetLogger(config LoggerConfig) (*Logger, error) {
 	l := &Logger{}
 
@@ -50,16 +50,8 @@ func (l *Logger) logging(in chan messages) {
 			continue
 		}
 
-		logMsg, err := json.Marshal(msg.Msg)
-
-		if err != nil {
-			log.Fatalln(err)
-			continue
-		}
-
 		for _, driver := range l.Config.Output {
-
-			err := driver.PutMsg(logMsg)
+			err := driver.PutMsg(msg.Msg)
 
 			if err != nil {
 				log.Fatalln(err)

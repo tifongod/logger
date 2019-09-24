@@ -9,11 +9,11 @@ const (
 )
 
 type LoggerConfig struct {
-	Level int
+	Level  int
 	Buffer int
 	Output []LogDriver
 }
 
 type LogDriver interface {
-	PutMsg(msg []byte) error
+	PutMsg(msg message) error
 }
