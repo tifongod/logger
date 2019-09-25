@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/satori/go.uuid"
 )
 
 type Logger struct {
@@ -46,10 +45,6 @@ func GetLogger(config LoggerConfig) (*Logger, error) {
 
 func (l *Logger) logging(in chan messages) {
 	for msg := range in {
-		if l.Config.Level < msg.Level {
-			continue
-		}
-
 		for _, driver := range l.Config.Output {
 			err := driver.PutMsg(msg.Msg)
 
@@ -60,7 +55,13 @@ func (l *Logger) logging(in chan messages) {
 	}
 }
 
-func (l *Logger) log(msg messages) {
+func (l *Logger) log(ctx context.Context, level int, data interface{}) {
+	if l.Config.Level >= level {
+		l.logMessage(l.genMessage(ctx, level, data))
+	}
+}
+
+func (l *Logger) logMessage(msg messages) {
 	select {
 	case l.Msg <- msg:
 	case <-time.After(time.Microsecond * 20):
@@ -85,7 +86,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, data interface{}) me
 		code = "TRACE"
 	}
 
-	requestId := uuid.NewV4().String()
+	requestId := "no_context"
 
 	var key RequestUIDKey = "requestId"
 	id := ctx.Value(key)
@@ -99,6 +100,10 @@ func (l *Logger) genMessage(ctx context.Context, level int, data interface{}) me
 	}
 
 	trace := string(debug.Stack())
+
+	if err, ok := data.(error); ok {
+		data = err.Error()
+	}
 
 	msg := messages{
 		Level: level,
@@ -116,21 +121,25 @@ func (l *Logger) genMessage(ctx context.Context, level int, data interface{}) me
 }
 
 func (l *Logger) Alert(ctx context.Context, data interface{}) {
-	l.log(l.genMessage(ctx, ALERT, data))
+	l.log(ctx, ALERT, data)
 }
 
 func (l *Logger) Error(ctx context.Context, data interface{}) {
-	l.log(l.genMessage(ctx, ERROR, data))
+	l.log(ctx, ERROR, data)
+}
+
+func (l *Logger) Err(ctx context.Context, err error) {
+	l.log(ctx, ERROR, err)
 }
 
 func (l *Logger) Log(ctx context.Context, data interface{}) {
-	l.log(l.genMessage(ctx, LOG, data))
+	l.log(ctx, LOG, data)
 }
 
 func (l *Logger) Debug(ctx context.Context, data interface{}) {
-	l.log(l.genMessage(ctx, DEBUG, data))
+	l.log(ctx, DEBUG, data)
 }
 
 func (l *Logger) Trace(ctx context.Context, data interface{}) {
-	l.log(l.genMessage(ctx, TRACE, data))
+	l.log(ctx, TRACE, data)
 }
