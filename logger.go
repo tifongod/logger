@@ -6,7 +6,6 @@ import (
 	"runtime/debug"
 	"strings"
 	"time"
-
 )
 
 type Logger struct {
@@ -20,12 +19,13 @@ type messages struct {
 }
 
 type Message struct {
-	Time      string          `json:"time"`
-	RequestId string          `json:"requestId"`
-	Code      string          `json:"code"`
-	Trace     []string        `json:"trace"`
-	Data      interface{}     `json:"data"`
-	Ctx       context.Context `json:"ctx"`
+	ServiceName string          `json:"service_name"`
+	Time        string          `json:"time"`
+	RequestId   string          `json:"request_id"`
+	MessageType string          `json:"message_type"`
+	Trace       []string        `json:"trace"`
+	Data        interface{}     `json:"data"`
+	Ctx         context.Context `json:"-"`
 }
 
 type RequestUIDKey string
@@ -108,12 +108,12 @@ func (l *Logger) genMessage(ctx context.Context, level int, data interface{}) me
 	msg := messages{
 		Level: level,
 		Msg: Message{
-			Time:      time.Now().UTC().Format("2006-01-02 15:04:05"),
-			Code:      code,
-			RequestId: requestId,
-			Data:      data,
-			Trace:     strings.Split(trace, "\n"),
-			Ctx:       ctx,
+			Time:        time.Now().UTC().Format("2006-01-02 15:04:05"),
+			MessageType: code,
+			RequestId:   requestId,
+			Data:        data,
+			Trace:       strings.Split(trace, "\n"),
+			Ctx:         ctx,
 		},
 	}
 
