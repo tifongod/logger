@@ -103,10 +103,8 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, data i
 
 	var key RequestUIDKey = "requestId"
 	id := ctx.Value(key)
-
 	if id != nil {
 		idString, ok := id.(string)
-
 		if ok {
 			requestId = idString
 		}
@@ -133,26 +131,52 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, data i
 	return msg
 }
 
-func (l *Logger) Alert(ctx context.Context, data interface{}) {
+func (l *Logger) AlertWithContext(ctx context.Context, data interface{}) {
 	l.log(ctx, ALERT, data)
+}
+
+func (l *Logger) ErrorWithContext(ctx context.Context, data interface{}) {
+	l.log(ctx, ERROR, data)
+}
+
+func (l *Logger) ErrWithContext(ctx context.Context, err error, msg string) {
+	er := ErrorMsg{err: err, errText: msg}
+	l.log(ctx, ERROR, er)
+}
+
+func (l *Logger) LogWithContext(ctx context.Context, data interface{}) {
+	l.log(ctx, LOG, data)
+}
+
+func (l *Logger) DebugWithContext(ctx context.Context, data interface{}) {
+	l.log(ctx, DEBUG, data)
+}
+
+func (l *Logger) TraceWithContext(ctx context.Context, data interface{}) {
+	l.log(ctx, TRACE, data)
+}
+
+func (l *Logger) Alert(ctx context.Context, data interface{}) {
+	l.log(context.Background(), ALERT, data)
 }
 
 func (l *Logger) Error(ctx context.Context, data interface{}) {
 	l.log(ctx, ERROR, data)
 }
 
-func (l *Logger) Err(ctx context.Context, err error) {
-	l.log(ctx, ERROR, err)
+func (l *Logger) Err(ctx context.Context, err error, msg string) {
+	er := ErrorMsg{err: err, errText: msg}
+	l.log(context.Background(), ERROR, er)
 }
 
 func (l *Logger) Log(ctx context.Context, data interface{}) {
-	l.log(ctx, LOG, data)
+	l.log(context.Background(), LOG, data)
 }
 
 func (l *Logger) Debug(ctx context.Context, data interface{}) {
-	l.log(ctx, DEBUG, data)
+	l.log(context.Background(), DEBUG, data)
 }
 
 func (l *Logger) Trace(ctx context.Context, data interface{}) {
-	l.log(ctx, TRACE, data)
+	l.log(context.Background(), TRACE, data)
 }
