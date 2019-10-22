@@ -9,9 +9,10 @@ const (
 )
 
 type LoggerConfig struct {
-	Level  int
-	Buffer int
-	Output []LogDriver
+	ServiceName string
+	Level       int
+	Buffer      int
+	Output      []LogDriver
 }
 
 type LogDriver interface {
