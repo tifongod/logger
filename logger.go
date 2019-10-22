@@ -101,7 +101,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, data i
 
 	requestId := "no_context"
 
-	var key RequestUIDKey = "requestId"
+	var key RequestUIDKey = "requestID"
 	id := ctx.Value(key)
 	if id != nil {
 		idString, ok := id.(string)
@@ -161,7 +161,7 @@ func (l *Logger) Alert(ctx context.Context, data interface{}) {
 }
 
 func (l *Logger) Error(ctx context.Context, data interface{}) {
-	l.log(ctx, ERROR, data)
+	l.log(context.Background(), ERROR, data)
 }
 
 func (l *Logger) Err(ctx context.Context, err error, msg string) {
