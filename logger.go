@@ -101,7 +101,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, data i
 
 	requestId := "no_context"
 
-	var key RequestUIDKey = "requestId"
+	var key RequestUIDKey = "requestID"
 	id := ctx.Value(key)
 	if id != nil {
 		idString, ok := id.(string)
@@ -156,24 +156,24 @@ func (l *Logger) TraceWithContext(ctx context.Context, data interface{}) {
 	l.log(ctx, TRACE, data)
 }
 
-func (l *Logger) Alert(ctx context.Context, data interface{}) {
+func (l *Logger) Alert(data interface{}) {
 	l.log(context.Background(), ALERT, data)
 }
 
-func (l *Logger) Error(ctx context.Context, data interface{}) {
-	l.log(ctx, ERROR, data)
+func (l *Logger) Err(data interface{}) {
+	l.log(context.Background(), ERROR, data)
 }
 
-func (l *Logger) Err(ctx context.Context, err error, msg string) {
+func (l *Logger) Error(msg string, err error) {
 	er := ErrorMsg{err: err, errText: msg}
 	l.log(context.Background(), ERROR, er)
 }
 
-func (l *Logger) Log(ctx context.Context, data interface{}) {
+func (l *Logger) Log(data interface{}) {
 	l.log(context.Background(), LOG, data)
 }
 
-func (l *Logger) Debug(ctx context.Context, data interface{}) {
+func (l *Logger) Debug(data interface{}) {
 	l.log(context.Background(), DEBUG, data)
 }
 
