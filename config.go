@@ -17,4 +17,5 @@ type LoggerConfig struct {
 
 type LogDriver interface {
 	PutMsg(msg Message) error
+	Init() error
 }
