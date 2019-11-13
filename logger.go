@@ -40,6 +40,12 @@ type RequestUIDKey string
 // GetLogger получение инстанса логгер
 func GetLogger(config LoggerConfig) (*Logger, error) {
 	l := &Logger{}
+	for _, ld := range config.Output {
+		err := ld.Init()
+		if err != nil {
+			return nil, err
+		}
+	}
 	l.Config = config
 	in := make(chan blankMsg, config.Buffer)
 	l.Msg = in
