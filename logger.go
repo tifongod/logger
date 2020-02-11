@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"runtime/debug"
-	"strings"
 	"time"
 )
 
@@ -23,7 +22,7 @@ type Message struct {
 	Time        string          `json:"time"`
 	RequestId   string          `json:"request_id"`
 	MessageType string          `json:"message_type"`
-	Trace       []string        `json:"trace"`
+	Trace       string          `json:"trace"`
 	Data        interface{}     `json:"data"`
 	Ctx         context.Context `json:"-"`
 }
@@ -115,7 +114,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, data i
 			requestId = idString
 		}
 	}
-	trace := strings.Split(string(stack), "\n")
+	trace := string(stack)
 
 	if err, ok := data.(error); ok {
 		data = err.Error()
@@ -129,7 +128,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, data i
 			MessageType: code,
 			RequestId:   requestId,
 			Data:        data,
-			Trace:       trace[7:],
+			Trace:       trace,
 			Ctx:         ctx,
 		},
 	}
