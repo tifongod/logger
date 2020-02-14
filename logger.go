@@ -19,7 +19,7 @@ type messages struct {
 
 type Message struct {
 	ServiceName string          `json:"service_name"`
-	Time        string          `json:"time"`
+	Time        string          `json:"date"`
 	RequestId   string          `json:"request_id"`
 	MessageType string          `json:"message_type"`
 	Trace       string          `json:"trace"`
