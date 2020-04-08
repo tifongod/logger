@@ -21,6 +21,9 @@ type Message struct {
 	ServiceName string          `json:"service_name"`
 	Time        string          `json:"date"`
 	RequestId   string          `json:"request_id"`
+	ClientID    string          `json:"client_id,omitempty"`
+	UserID      string          `json:"user_id,omitempty"`
+	AccountID   string          `json:"account_id,omitempty"`
 	MessageType string          `json:"message_type"`
 	Trace       string          `json:"trace"`
 	Data        interface{}     `json:"data"`
@@ -35,6 +38,7 @@ type blankMsg struct {
 }
 
 type RequestUIDKey string
+type ContextUIDKey string
 
 // GetLogger получение инстанса логгер
 func GetLogger(config LoggerConfig) (*Logger, error) {
@@ -104,7 +108,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, data i
 		code = "TRACE"
 	}
 
-	requestId := "no_context"
+	requestId, clientID, accountID, userID := "no_context", "no_context", "", ""
 
 	var key RequestUIDKey = "requestID"
 	id := ctx.Value(key)
@@ -114,6 +118,35 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, data i
 			requestId = idString
 		}
 	}
+
+	var clientIDKey ContextUIDKey = "clientID"
+	var accountIDKey ContextUIDKey = "accountID"
+	var userIDKey ContextUIDKey = "accountID"
+
+	clientIDValue := ctx.Value(clientIDKey)
+	if clientIDValue != nil {
+		idString, ok := clientIDValue.(string)
+		if ok {
+			clientID = idString
+		}
+	}
+
+	accountIDValue := ctx.Value(accountIDKey)
+	if accountIDValue != nil {
+		idString, ok := accountIDValue.(string)
+		if ok {
+			accountID = idString
+		}
+	}
+
+	userIDValue := ctx.Value(userIDKey)
+	if userIDValue != nil {
+		idString, ok := userIDValue.(string)
+		if ok {
+			userID = idString
+		}
+	}
+
 	trace := string(stack)
 
 	if err, ok := data.(error); ok {
@@ -127,6 +160,9 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, data i
 			Time:        time.Now().UTC().Format("2006-01-02 15:04:05"),
 			MessageType: code,
 			RequestId:   requestId,
+			ClientID:    clientID,
+			UserID:      userID,
+			AccountID:   accountID,
 			Data:        data,
 			Trace:       trace,
 			Ctx:         ctx,
