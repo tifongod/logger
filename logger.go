@@ -27,6 +27,7 @@ type Message struct {
 	AccountID   string                 `json:"account_id,omitempty"`
 	MessageType string                 `json:"message_type"`
 	Trace       string                 `json:"trace,omitempty"`
+	Stacktrace  *Stacktrace            `json:"stacktrace,omitempty"`
 	Data        interface{}            `json:"data"`
 	Tags        map[string]string      `json:"tags,omitempty"`
 	Extra       map[string]interface{} `json:"extra,omitempty"`
@@ -43,10 +44,11 @@ type UserForLog struct {
 }
 
 type blankMsg struct {
-	level int
-	data  interface{}
-	stack []byte
-	ctx   context.Context
+	level      int
+	data       interface{}
+	stack      []byte
+	Stacktrace *Stacktrace
+	ctx        context.Context
 
 	mutator messageMutator
 }
@@ -82,7 +84,7 @@ func GetLogger(config LoggerConfig) (*Logger, error) {
 func (l *Logger) logging(in chan blankMsg) {
 	for msg := range in {
 		for _, driver := range l.Config.Output {
-			m := l.genMessage(msg.ctx, msg.level, msg.stack, msg.data)
+			m := l.genMessage(msg.ctx, msg.level, msg.stack, msg.Stacktrace, msg.data)
 
 			if msg.mutator != nil {
 				m = msg.mutator.mutate(m)
@@ -101,10 +103,11 @@ func (l *Logger) log(ctx context.Context, level int, data interface{}) {
 	if l.Config.Level >= level {
 		stack := debug.Stack()
 		bm := blankMsg{
-			level: level,
-			data:  data,
-			stack: stack,
-			ctx:   ctx,
+			level:      level,
+			data:       data,
+			stack:      stack,
+			Stacktrace: NewStacktrace(),
+			ctx:        ctx,
 		}
 		l.logMessage(bm)
 	}
@@ -120,7 +123,7 @@ func (l *Logger) logMessage(msg blankMsg) {
 	}
 }
 
-func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, data interface{}) messages {
+func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, stacktrace *Stacktrace, data interface{}) messages {
 	code, ok := levelSlug[level]
 
 	if !ok {
@@ -194,6 +197,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, data i
 			AccountID:   accountID,
 			Data:        data,
 			Trace:       trace,
+			Stacktrace:  stacktrace,
 			Ctx:         ctx,
 			User:        userForLog,
 		},
@@ -284,11 +288,12 @@ func (e *LogEvent) log(ctx context.Context, level int, data interface{}) {
 	if e.l.Config.Level >= level {
 		stack := debug.Stack()
 		bm := blankMsg{
-			level:   level,
-			data:    data,
-			stack:   stack,
-			ctx:     ctx,
-			mutator: e,
+			level:      level,
+			data:       data,
+			stack:      stack,
+			Stacktrace: NewStacktrace(),
+			ctx:        ctx,
+			mutator:    e,
 		}
 		e.l.logMessage(bm)
 	}
