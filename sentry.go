@@ -63,6 +63,12 @@ func (s *SentryDriver) PutMsg(msg Message) error {
 
 	scope := sentry.NewScope()
 
+	tags := msg.Tags
+	if tags == nil {
+		tags = make(map[string]string)
+	}
+	tags["source"] = msg.Source
+
 	scope.SetTags(msg.Tags)
 	scope.SetExtras(msg.Extra)
 

@@ -27,6 +27,7 @@ type Message struct {
 	AccountID   string                 `json:"account_id,omitempty"`
 	MessageType string                 `json:"message_type"`
 	Trace       string                 `json:"trace,omitempty"`
+	Source      string                 `json:"source,omitempty"`
 	Stacktrace  *Stacktrace            `json:"stacktrace,omitempty"`
 	Data        interface{}            `json:"data"`
 	Tags        map[string]string      `json:"tags,omitempty"`
@@ -146,6 +147,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, stackt
 	var accountIDKey ContextUIDKey = "accountID"
 	var userIDKey ContextUIDKey = "userID"
 	var userForLogKey ContextUIDKey = "userForLog"
+	var sourceKey ContextUIDKey = "source"
 
 	clientIDValue := ctx.Value(clientIDKey)
 	if clientIDValue != nil {
@@ -179,6 +181,15 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, stackt
 		}
 	}
 
+	source := ""
+	sourceValue := ctx.Value(sourceKey)
+	if sourceValue != nil {
+		sourceString, ok := sourceValue.(string)
+		if ok {
+			source = sourceString
+		}
+	}
+
 	trace := string(stack)
 
 	if err, ok := data.(error); ok {
@@ -194,6 +205,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, stackt
 			RequestId:   requestId,
 			ClientID:    clientID,
 			UserID:      userID,
+			Source:      source,
 			AccountID:   accountID,
 			Data:        data,
 			Trace:       trace,
@@ -212,6 +224,7 @@ type messageMutator interface {
 
 type LogEvent struct {
 	l       *Logger
+	Source  string                 `json:"source,omitempty"`
 	Tags    map[string]string      `json:"tags,omitempty"`
 	Extra   map[string]interface{} `json:"extra,omitempty"`
 	User    *UserForLog            `json:"user,omitempty"`
@@ -219,6 +232,7 @@ type LogEvent struct {
 }
 
 func (e *LogEvent) mutate(m messages) messages {
+	m.Msg.Source = e.Source
 	m.Msg.Tags = e.Tags
 	m.Msg.Extra = e.Extra
 	m.Msg.Request = e.Request
@@ -262,6 +276,11 @@ func (e *LogEvent) WithTag(k, v string) *LogEvent {
 
 func (e *LogEvent) WithExtras(extras map[string]interface{}) *LogEvent {
 	e.Extra = extras
+	return e
+}
+
+func (e *LogEvent) WithSource(source string) *LogEvent {
+	e.Source = source
 	return e
 }
 
