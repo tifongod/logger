@@ -232,7 +232,9 @@ type LogEvent struct {
 }
 
 func (e *LogEvent) mutate(m messages) messages {
-	m.Msg.Source = e.Source
+	if e.Source != "" {
+		m.Msg.Source = e.Source
+	}
 	m.Msg.Tags = e.Tags
 	m.Msg.Extra = e.Extra
 	m.Msg.Request = e.Request
