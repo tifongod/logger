@@ -68,6 +68,10 @@ func (s *STDOUTDriver) PutMsg(msg Message) error {
 func (s *STDOUTDriver) formRequest(r *http.Request) string {
 	res := ""
 
+	if r.Body == nil {
+		return res
+	}
+
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		s.baseLog.Println(err.Error())
