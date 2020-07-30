@@ -1,9 +1,9 @@
-package logger
+package stdout
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"github.com/d-kolpakov/logger"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -22,13 +22,14 @@ func (s *STDOUTDriver) Init() error {
 	return nil
 }
 
+//easyjson:json
 type stdoutMsg struct {
-	Message
+	logger.Message
 	FormattedStackTrace string `json:"fstacktrace,omitempty"`
 	Request             string `json:"request,omitempty"`
 }
 
-func (s *STDOUTDriver) PutMsg(msg Message) error {
+func (s *STDOUTDriver) PutMsg(msg logger.Message) error {
 	fmsg := stdoutMsg{Message: msg}
 
 	needLogRequest := true
@@ -56,7 +57,7 @@ func (s *STDOUTDriver) PutMsg(msg Message) error {
 		fmsg.Request = s.formRequest(msg.Request)
 	}
 
-	logMsg, err := json.Marshal(fmsg)
+	logMsg, err := fmsg.MarshalJSON()
 	if err != nil {
 		s.baseLog.Fatalln(err)
 	}

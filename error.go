@@ -10,3 +10,7 @@ type ErrorMsg struct {
 func (e *ErrorMsg) Error() string {
 	return fmt.Sprintf("error: %s, error_message: %s", e.err.Error(), e.errText)
 }
+
+func (e *ErrorMsg) GetOriginError() error {
+	return e.err
+}

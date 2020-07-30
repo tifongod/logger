@@ -1,8 +1,9 @@
-package logger
+package sentry
 
 import (
 	"errors"
 	"fmt"
+	"github.com/d-kolpakov/logger"
 	"github.com/getsentry/sentry-go"
 	"reflect"
 	"time"
@@ -52,7 +53,7 @@ func (s *SentryDriver) Init() error {
 	return nil
 }
 
-func (s *SentryDriver) PutMsg(msg Message) error {
+func (s *SentryDriver) PutMsg(msg logger.Message) error {
 	level, ok := s.NeedToCapture[msg.MessageType]
 
 	if !ok {
@@ -98,16 +99,17 @@ func (s *SentryDriver) PutMsg(msg Message) error {
 	return nil
 }
 
-func eventFromException(msg Message, level sentry.Level) *sentry.Event {
+func eventFromException(msg logger.Message, level sentry.Level) *sentry.Event {
 	var err, capturedError error
 
-	if err, ok := msg.Data.(ErrorMsg); ok {
-		capturedError = err.err
-	} else if err, ok := msg.Data.(error); ok {
+	switch err := msg.Data.(type) {
+	case logger.ErrorMsg:
+		capturedError = err.GetOriginError()
+	case error:
 		capturedError = err
-	} else if err, ok := msg.Data.(string); ok {
+	case string:
 		capturedError = errors.New(err)
-	} else {
+	default:
 		capturedError = errors.New(fmt.Sprintf("unknown error: %v", msg.Data))
 	}
 
@@ -120,7 +122,7 @@ func eventFromException(msg Message, level sentry.Level) *sentry.Event {
 		event.Exception = append(event.Exception, sentry.Exception{
 			Value:      err.Error(),
 			Type:       reflect.TypeOf(err).String(),
-			Stacktrace: convertLoggerTraceToSentryTrace(ExtractStacktrace(err)),
+			Stacktrace: convertLoggerTraceToSentryTrace(logger.ExtractStacktrace(err)),
 		})
 		switch previous := err.(type) {
 		case interface{ Unwrap() error }:
@@ -146,7 +148,7 @@ func eventFromException(msg Message, level sentry.Level) *sentry.Event {
 	return event
 }
 
-func convertLoggerTraceToSentryTrace(stacktrace *Stacktrace) *sentry.Stacktrace {
+func convertLoggerTraceToSentryTrace(stacktrace *logger.Stacktrace) *sentry.Stacktrace {
 	res := &sentry.Stacktrace{}
 
 	if stacktrace == nil {
@@ -188,7 +190,7 @@ func reverse(a []sentry.Exception) {
 	}
 }
 
-func eventFromMessage(msg Message, level sentry.Level) *sentry.Event {
+func eventFromMessage(msg logger.Message, level sentry.Level) *sentry.Event {
 	message := ""
 	if data, ok := msg.Data.(string); ok {
 		message = data

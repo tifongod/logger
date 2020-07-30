@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/d-kolpakov/logger"
+	sentryDriver "github.com/d-kolpakov/logger/drivers/sentry"
+	"github.com/d-kolpakov/logger/drivers/stdout"
 	"github.com/getsentry/sentry-go"
 	"time"
 )
@@ -11,7 +14,7 @@ import (
 func main() {
 	lDrivers := make([]logger.LogDriver, 0, 5)
 
-	stdoutLD := &logger.STDOUTDriver{}
+	stdoutLD := &stdout.STDOUTDriver{}
 
 	option := &sentry.ClientOptions{
 		Dsn:              "",
@@ -20,7 +23,7 @@ func main() {
 		Environment:      "local",
 	}
 
-	sentryD := &logger.SentryDriver{
+	sentryD := &sentryDriver.SentryDriver{
 		ClientOptions: option,
 		NeedToCapture: map[string]sentry.Level{
 			"ALERT":   sentry.LevelFatal,
@@ -44,11 +47,11 @@ func main() {
 		panic(err)
 	}
 
-	l.NewLogEvent().Debug(fmt.Sprintf(`start %s service`, "test"))
+	l.NewLogEvent().Debug(context.Background(), fmt.Sprintf(`start %s service`, "test"))
 
-	l.NewLogEvent().WithTag("is_done", "yeap").WithExtra("ddd", 54).Alert(errors.New("very new alert"))
-	l.NewLogEvent().WithTag("is_new", "true").WithExtra("xxx", 5412).Alert(errors.New("хочу увидеть стек-трейс"))
-	l.NewLogEvent().WithTag("is_new", "true").WithExtra("xxx", 5412).Debug(errors.New("хочу увидеть стек-трейс дебага"))
+	l.NewLogEvent().WithTag("is_done", "yeap").WithExtra("ddd", 54).Alert(context.Background(), errors.New("very new alert"))
+	l.NewLogEvent().WithTag("is_new", "true").WithExtra("xxx", 5412).Alert(context.Background(), errors.New("хочу увидеть стек-трейс"))
+	l.NewLogEvent().WithTag("is_new", "true").WithExtra("xxx", 5412).Debug(context.Background(), errors.New("хочу увидеть стек-трейс дебага"))
 
 	time.Sleep(time.Second * 100)
 }

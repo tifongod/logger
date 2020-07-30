@@ -18,6 +18,7 @@ type messages struct {
 	Msg   Message
 }
 
+//easyjson:json
 type Message struct {
 	ServiceName string                 `json:"service_name"`
 	Time        string                 `json:"date"`
@@ -37,6 +38,7 @@ type Message struct {
 	Ctx         context.Context        `json:"-"`
 }
 
+//easyjson:json
 type UserForLog struct {
 	Email     string `json:"email,omitempty"`
 	ID        string `json:"id,omitempty"`
@@ -65,7 +67,7 @@ var levelSlug = map[int]string{
 	TRACE: "TRACE",
 }
 
-// GetLogger получение инстанса логгер
+// GetLogger получение инстанса логгера
 func GetLogger(config LoggerConfig) (*Logger, error) {
 	l := &Logger{}
 	for _, ld := range config.Output {
@@ -135,6 +137,12 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, stackt
 	var userForLog *UserForLog
 
 	var key RequestUIDKey = "requestID"
+	var clientIDKey ContextUIDKey = "clientID"
+	var accountIDKey ContextUIDKey = "accountID"
+	var userIDKey ContextUIDKey = "userID"
+	var userForLogKey ContextUIDKey = "userForLog"
+	var sourceKey ContextUIDKey = "source"
+
 	id := ctx.Value(key)
 	if id != nil {
 		idString, ok := id.(string)
@@ -142,12 +150,6 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, stackt
 			requestId = idString
 		}
 	}
-
-	var clientIDKey ContextUIDKey = "clientID"
-	var accountIDKey ContextUIDKey = "accountID"
-	var userIDKey ContextUIDKey = "userID"
-	var userForLogKey ContextUIDKey = "userForLog"
-	var sourceKey ContextUIDKey = "source"
 
 	clientIDValue := ctx.Value(clientIDKey)
 	if clientIDValue != nil {
@@ -324,114 +326,27 @@ func (l *Logger) NewLogEvent() *LogEvent {
 	return &LogEvent{l: l}
 }
 
-func (l *LogEvent) AlertWithContext(ctx context.Context, data interface{}) {
+func (l *LogEvent) Alert(ctx context.Context, data interface{}) {
 	l.log(ctx, ALERT, data)
 }
 
-func (l *LogEvent) ErrorWithContext(ctx context.Context, data interface{}) {
+func (l *LogEvent) Error(ctx context.Context, data interface{}) {
 	l.log(ctx, ERROR, data)
 }
 
-func (l *LogEvent) ErrWithContext(ctx context.Context, err error, msg string) {
+func (l *LogEvent) Err(ctx context.Context, err error, msg string) {
 	er := ErrorMsg{err: err, errText: msg}
 	l.log(ctx, ERROR, er)
 }
 
-func (l *LogEvent) LogWithContext(ctx context.Context, data interface{}) {
+func (l *LogEvent) Log(ctx context.Context, data interface{}) {
 	l.log(ctx, LOG, data)
 }
 
-func (l *LogEvent) DebugWithContext(ctx context.Context, data interface{}) {
+func (l *LogEvent) Debug(ctx context.Context, data interface{}) {
 	l.log(ctx, DEBUG, data)
-}
-
-func (l *LogEvent) TraceWithContext(ctx context.Context, data interface{}) {
-	l.log(ctx, TRACE, data)
-}
-
-func (l *LogEvent) Alert(data interface{}) {
-	l.log(context.Background(), ALERT, data)
-}
-
-func (l *LogEvent) Err(data interface{}) {
-	l.log(context.Background(), ERROR, data)
-}
-
-func (l *LogEvent) Error(msg string, err error) {
-	er := ErrorMsg{err: err, errText: msg}
-	l.log(context.Background(), ERROR, er)
-}
-
-func (l *LogEvent) Log(data interface{}) {
-	l.log(context.Background(), LOG, data)
-}
-
-func (l *LogEvent) Debug(data interface{}) {
-	l.log(context.Background(), DEBUG, data)
 }
 
 func (l *LogEvent) Trace(ctx context.Context, data interface{}) {
-	l.log(context.Background(), TRACE, data)
-}
-
-// AlertWithContext deprecated
-func (l *Logger) AlertWithContext(ctx context.Context, data interface{}) {
-	l.log(ctx, ALERT, data)
-}
-
-// ErrorWithContext deprecated
-func (l *Logger) ErrorWithContext(ctx context.Context, data interface{}) {
-	l.log(ctx, ERROR, data)
-}
-
-// ErrWithContext deprecated
-func (l *Logger) ErrWithContext(ctx context.Context, err error, msg string) {
-	er := ErrorMsg{err: err, errText: msg}
-	l.log(ctx, ERROR, er)
-}
-
-// LogWithContext deprecated
-func (l *Logger) LogWithContext(ctx context.Context, data interface{}) {
-	l.log(ctx, LOG, data)
-}
-
-// DebugWithContext deprecated
-func (l *Logger) DebugWithContext(ctx context.Context, data interface{}) {
-	l.log(ctx, DEBUG, data)
-}
-
-// TraceWithContext deprecated
-func (l *Logger) TraceWithContext(ctx context.Context, data interface{}) {
 	l.log(ctx, TRACE, data)
-}
-
-// Alert deprecated
-func (l *Logger) Alert(data interface{}) {
-	l.log(context.Background(), ALERT, data)
-}
-
-// Err deprecated
-func (l *Logger) Err(data interface{}) {
-	l.log(context.Background(), ERROR, data)
-}
-
-// Error deprecated
-func (l *Logger) Error(msg string, err error) {
-	er := ErrorMsg{err: err, errText: msg}
-	l.log(context.Background(), ERROR, er)
-}
-
-// Log deprecated
-func (l *Logger) Log(data interface{}) {
-	l.log(context.Background(), LOG, data)
-}
-
-// Debug deprecated
-func (l *Logger) Debug(data interface{}) {
-	l.log(context.Background(), DEBUG, data)
-}
-
-// Trace deprecated
-func (l *Logger) Trace(ctx context.Context, data interface{}) {
-	l.log(context.Background(), TRACE, data)
 }
