@@ -56,7 +56,6 @@ type blankMsg struct {
 	mutator messageMutator
 }
 
-type RequestUIDKey string
 type ContextUIDKey string
 
 var levelSlug = map[int]string{
@@ -136,7 +135,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, stackt
 	requestId, clientID, accountID, userID := "no_context", "no_context", "", ""
 	var userForLog *UserForLog
 
-	var key RequestUIDKey = "requestID"
+	var key ContextUIDKey = "requestID"
 	var clientIDKey ContextUIDKey = "clientID"
 	var accountIDKey ContextUIDKey = "accountID"
 	var userIDKey ContextUIDKey = "userID"
