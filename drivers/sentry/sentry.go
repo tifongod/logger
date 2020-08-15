@@ -68,7 +68,6 @@ func (s *SentryDriver) PutMsg(msg logger.Message) error {
 	if tags == nil {
 		tags = make(map[string]string)
 	}
-	tags["source"] = msg.Source
 
 	scope.SetTags(msg.Tags)
 	scope.SetExtras(msg.Extra)

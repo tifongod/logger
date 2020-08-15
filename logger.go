@@ -22,10 +22,6 @@ type messages struct {
 type Message struct {
 	ServiceName string                 `json:"service_name"`
 	Time        string                 `json:"date"`
-	RequestId   string                 `json:"request_id"`
-	ClientID    string                 `json:"client_id,omitempty"`
-	UserID      string                 `json:"user_id,omitempty"`
-	AccountID   string                 `json:"account_id,omitempty"`
 	MessageType string                 `json:"message_type"`
 	Trace       string                 `json:"trace,omitempty"`
 	Source      string                 `json:"source,omitempty"`
@@ -76,6 +72,11 @@ func GetLogger(config LoggerConfig) (*Logger, error) {
 		}
 	}
 	l.Config = config
+
+	if l.Config.NeedToLog == nil {
+		l.Config.NeedToLog = defaultNeedToLogDeterminant
+	}
+
 	in := make(chan blankMsg, config.Buffer)
 	l.Msg = in
 	go l.logging(l.Msg)
@@ -101,20 +102,6 @@ func (l *Logger) logging(in chan blankMsg) {
 	}
 }
 
-func (l *Logger) log(ctx context.Context, level int, data interface{}) {
-	if l.Config.Level >= level {
-		stack := debug.Stack()
-		bm := blankMsg{
-			level:      level,
-			data:       data,
-			stack:      stack,
-			Stacktrace: NewStacktrace(),
-			ctx:        ctx,
-		}
-		l.logMessage(bm)
-	}
-}
-
 func (l *Logger) logMessage(msg blankMsg) {
 	select {
 	case l.Msg <- msg:
@@ -132,62 +119,13 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, stackt
 		code = "UNKNOWN"
 	}
 
-	requestId, clientID, accountID, userID := "no_context", "no_context", "", ""
 	var userForLog *UserForLog
-
-	var key ContextUIDKey = "requestID"
-	var clientIDKey ContextUIDKey = "clientID"
-	var accountIDKey ContextUIDKey = "accountID"
-	var userIDKey ContextUIDKey = "userID"
 	var userForLogKey ContextUIDKey = "userForLog"
-	var sourceKey ContextUIDKey = "source"
-
-	id := ctx.Value(key)
-	if id != nil {
-		idString, ok := id.(string)
-		if ok {
-			requestId = idString
-		}
-	}
-
-	clientIDValue := ctx.Value(clientIDKey)
-	if clientIDValue != nil {
-		idString, ok := clientIDValue.(string)
-		if ok {
-			clientID = idString
-		}
-	}
-
-	accountIDValue := ctx.Value(accountIDKey)
-	if accountIDValue != nil {
-		idString, ok := accountIDValue.(string)
-		if ok {
-			accountID = idString
-		}
-	}
-
 	userForLogValue := ctx.Value(userForLogKey)
 	if userForLogValue != nil {
 		user, ok := userForLogValue.(*UserForLog)
 		if ok {
 			userForLog = user
-		}
-	}
-
-	userIDValue := ctx.Value(userIDKey)
-	if userIDValue != nil {
-		idString, ok := userIDValue.(string)
-		if ok {
-			userID = idString
-		}
-	}
-
-	source := ""
-	sourceValue := ctx.Value(sourceKey)
-	if sourceValue != nil {
-		sourceString, ok := sourceValue.(string)
-		if ok {
-			source = sourceString
 		}
 	}
 
@@ -197,18 +135,16 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, stackt
 		data = err.Error()
 	}
 
+	tags := l.extractTagsFromCtx(ctx)
+
 	msg := messages{
 		Level: level,
 		Msg: Message{
 			ServiceName: l.Config.ServiceName,
 			Time:        time.Now().UTC().Format("2006-01-02 15:04:05"),
 			MessageType: code,
-			RequestId:   requestId,
-			ClientID:    clientID,
-			UserID:      userID,
-			Source:      source,
-			AccountID:   accountID,
 			Data:        data,
+			Tags:        tags,
 			Trace:       trace,
 			Stacktrace:  stacktrace,
 			Ctx:         ctx,
@@ -217,6 +153,24 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, stackt
 	}
 
 	return msg
+}
+
+func (l *Logger) extractTagsFromCtx(ctx context.Context) map[string]string {
+	res := make(map[string]string, len(l.Config.TagsFromCtx))
+	for key, def := range l.Config.TagsFromCtx {
+		resValue := def
+		tmpVal := ctx.Value(key)
+		if tmpVal != nil {
+			valString, ok := tmpVal.(string)
+			if ok {
+				resValue = valString
+			}
+		}
+
+		res[string(key)] = resValue
+	}
+
+	return res
 }
 
 type messageMutator interface {
@@ -233,10 +187,14 @@ type LogEvent struct {
 }
 
 func (e *LogEvent) mutate(m messages) messages {
-	if e.Source != "" {
-		m.Msg.Source = e.Source
+	if m.Msg.Tags == nil {
+		m.Msg.Tags = e.Tags
+	} else {
+		for k, v := range e.Tags {
+			m.Msg.Tags[k] = v
+		}
 	}
-	m.Msg.Tags = e.Tags
+
 	m.Msg.Extra = e.Extra
 	m.Msg.Request = e.Request
 
@@ -282,11 +240,6 @@ func (e *LogEvent) WithExtras(extras map[string]interface{}) *LogEvent {
 	return e
 }
 
-func (e *LogEvent) WithSource(source string) *LogEvent {
-	e.Source = source
-	return e
-}
-
 func (e *LogEvent) WithExtra(k string, v interface{}) *LogEvent {
 	if e.Extra == nil {
 		e.Extra = make(map[string]interface{})
@@ -307,7 +260,7 @@ func (e *LogEvent) WithUser(user *UserForLog) *LogEvent {
 }
 
 func (e *LogEvent) log(ctx context.Context, level int, data interface{}) {
-	if e.l.Config.Level >= level {
+	if e.l.Config.NeedToLog(ctx, e.l.Config.Level, level) {
 		stack := debug.Stack()
 		bm := blankMsg{
 			level:      level,

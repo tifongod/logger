@@ -143,14 +143,6 @@ func easyjson22b64118DecodeGithubComDKolpakovLogger1(in *jlexer.Lexer, out *Mess
 			out.ServiceName = string(in.String())
 		case "date":
 			out.Time = string(in.String())
-		case "request_id":
-			out.RequestId = string(in.String())
-		case "client_id":
-			out.ClientID = string(in.String())
-		case "user_id":
-			out.UserID = string(in.String())
-		case "account_id":
-			out.AccountID = string(in.String())
 		case "message_type":
 			out.MessageType = string(in.String())
 		case "trace":
@@ -254,26 +246,6 @@ func easyjson22b64118EncodeGithubComDKolpakovLogger1(out *jwriter.Writer, in Mes
 		const prefix string = ",\"date\":"
 		out.RawString(prefix)
 		out.String(string(in.Time))
-	}
-	{
-		const prefix string = ",\"request_id\":"
-		out.RawString(prefix)
-		out.String(string(in.RequestId))
-	}
-	if in.ClientID != "" {
-		const prefix string = ",\"client_id\":"
-		out.RawString(prefix)
-		out.String(string(in.ClientID))
-	}
-	if in.UserID != "" {
-		const prefix string = ",\"user_id\":"
-		out.RawString(prefix)
-		out.String(string(in.UserID))
-	}
-	if in.AccountID != "" {
-		const prefix string = ",\"account_id\":"
-		out.RawString(prefix)
-		out.String(string(in.AccountID))
 	}
 	{
 		const prefix string = ",\"message_type\":"
