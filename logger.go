@@ -52,8 +52,6 @@ type blankMsg struct {
 	mutator messageMutator
 }
 
-type ContextUIDKey string
-
 var levelSlug = map[int]string{
 	ALERT: "ALERT",
 	ERROR: "ERROR",
@@ -120,8 +118,7 @@ func (l *Logger) genMessage(ctx context.Context, level int, stack []byte, stackt
 	}
 
 	var userForLog *UserForLog
-	var userForLogKey ContextUIDKey = "userForLog"
-	userForLogValue := ctx.Value(userForLogKey)
+	userForLogValue := ctx.Value("userForLog")
 	if userForLogValue != nil {
 		user, ok := userForLogValue.(*UserForLog)
 		if ok {

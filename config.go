@@ -17,7 +17,7 @@ type LoggerConfig struct {
 	Level       int
 	Buffer      int
 	Output      []LogDriver
-	TagsFromCtx map[ContextUIDKey]string
+	TagsFromCtx map[string]string
 	NeedToLog   NeedToLogDeterminant
 }
 
