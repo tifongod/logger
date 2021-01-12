@@ -224,7 +224,7 @@ func filterFrames(frames []Frame) []Frame {
 		}
 		// Skip Sentry internal frames, except for frames in _test packages (for
 		// testing).
-		if strings.HasPrefix(frame.Module, "github.com/d-kolpakov/logger") &&
+		if strings.HasPrefix(frame.Module, "github.com/d-kolpakov/logger/v2") &&
 			!strings.HasSuffix(frame.Module, "_test") {
 			continue
 		}

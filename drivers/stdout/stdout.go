@@ -3,7 +3,7 @@ package stdout
 import (
 	"bytes"
 	"fmt"
-	"github.com/d-kolpakov/logger"
+	"github.com/d-kolpakov/logger/v2"
 	"io/ioutil"
 	"log"
 	"net/http"

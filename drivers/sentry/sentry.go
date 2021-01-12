@@ -3,7 +3,7 @@ package sentry
 import (
 	"errors"
 	"fmt"
-	"github.com/d-kolpakov/logger"
+	"github.com/d-kolpakov/logger/v2"
 	"github.com/getsentry/sentry-go"
 	"reflect"
 	"time"
@@ -25,8 +25,8 @@ var defaultCaptured = map[string]sentry.Level{
 }
 
 var defaultErrorEvents = map[string]struct{}{
-	"ALERT":   struct{}{},
-	"UNKNOWN": struct{}{},
+	"ALERT":   {},
+	"UNKNOWN": {},
 }
 
 func (s *SentryDriver) Init() error {

@@ -4,7 +4,7 @@ package stdout
 
 import (
 	json "encoding/json"
-	logger "github.com/d-kolpakov/logger"
+	logger "github.com/d-kolpakov/logger/v2"
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
