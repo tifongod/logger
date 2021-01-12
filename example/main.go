@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	sentryDriver "github.com/d-kolpakov/logger/drivers/sentry"
-	"github.com/d-kolpakov/logger/drivers/stdout"
 	"github.com/d-kolpakov/logger/v2"
+	sentryDriver "github.com/d-kolpakov/logger/v2/drivers/sentry"
+	"github.com/d-kolpakov/logger/v2/drivers/stdout"
 	"github.com/getsentry/sentry-go"
 	"time"
 )
