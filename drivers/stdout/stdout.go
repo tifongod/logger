@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"reflect"
 )
 
 type STDOUTDriver struct {
@@ -34,6 +35,7 @@ func (s *STDOUTDriver) PutMsg(msg logger.Message) error {
 
 	needLogRequest := true
 	needLogTrace := true
+	fmsg.Data = parseData(fmsg.Data)
 
 	if s.LogRequest != nil && len(s.LogRequest) > 0 {
 		_, needLogRequest = s.LogRequest[msg.MessageType]
@@ -91,4 +93,31 @@ func (s *STDOUTDriver) formRequest(r *http.Request) string {
 	res = string(byteDump)
 
 	return res
+}
+
+type dataMsg struct {
+	DataMsg interface{} `json:"data_msg"`
+}
+
+func parseData (data interface{}) interface{} {
+	ct := reflect.TypeOf(data)
+	kind := ct.Kind()
+	switch kind {
+	case reflect.Struct, reflect.Map:
+	case reflect.String, reflect.Bool,
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		data = dataMsg{DataMsg: data}
+	default:
+		switch data.(type) {
+		case []byte:
+			if b, ok := data.([]byte); ok {
+				data = string(b)
+			}
+		default:
+			data = "Unknown object for log: " + kind.String()
+		}
+	}
+
+	return data
 }
