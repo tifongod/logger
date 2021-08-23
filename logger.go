@@ -82,6 +82,39 @@ func GetLogger(config LoggerConfig) (*Logger, error) {
 	return l, nil
 }
 
+func GetLoggerContext(ctx context.Context, config LoggerConfig) (*Logger, chan bool, error) {
+	l := &Logger{}
+	for _, ld := range config.Output {
+		err := ld.Init()
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	l.Config = config
+	if l.Config.NeedToLog == nil {
+		l.Config.NeedToLog = defaultNeedToLogDeterminant
+	}
+
+	completeChan := make(chan bool)
+	in := make(chan blankMsg, config.Buffer)
+	l.Msg = in
+
+	go func(ctx context.Context, in chan blankMsg) {
+		select {
+		case <-ctx.Done():
+			close(in)
+		}
+	}(ctx, in)
+
+	go func(ch chan bool) {
+		l.logging(l.Msg)
+		completeChan <- true
+
+	}(completeChan)
+
+	return l, completeChan, nil
+}
+
 func (l *Logger) logging(in chan blankMsg) {
 	for msg := range in {
 		for _, driver := range l.Config.Output {
