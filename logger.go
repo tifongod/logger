@@ -76,6 +76,8 @@ func GetLogger(config LoggerConfig) (*Logger, error) {
 	if l.Config.NeedToLog == nil {
 		l.Config.NeedToLog = defaultNeedToLogDeterminant
 	}
+	l.logDone = make(chan bool)
+	l.logCancel = make(chan bool)
 
 	in := make(chan blankMsg, config.Buffer)
 	l.Msg = in
