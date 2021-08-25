@@ -9,8 +9,10 @@ import (
 )
 
 type Logger struct {
-	Config LoggerConfig
-	Msg    chan blankMsg
+	Config    LoggerConfig
+	Msg       chan blankMsg
+	logDone   chan bool
+	logCancel chan bool
 }
 
 type messages struct {
@@ -74,45 +76,40 @@ func GetLogger(config LoggerConfig) (*Logger, error) {
 	if l.Config.NeedToLog == nil {
 		l.Config.NeedToLog = defaultNeedToLogDeterminant
 	}
+	l.logDone = make(chan bool)
+	l.logCancel = make(chan bool)
 
 	in := make(chan blankMsg, config.Buffer)
 	l.Msg = in
-	go l.logging(l.Msg)
+	l.logProcess()
 
 	return l, nil
 }
 
-func GetLoggerContext(ctx context.Context, config LoggerConfig) (*Logger, chan bool, error) {
-	l := &Logger{}
-	for _, ld := range config.Output {
-		err := ld.Init()
-		if err != nil {
-			return nil, nil, err
+func (l *Logger) Shutdown() {
+	l.logCancel <- true
+	<- l.logDone
+}
+
+func (l *Logger) logProcess() {
+	in := make(chan blankMsg, l.Config.Buffer)
+	go func() {
+		for {
+			select {
+			case <-l.logCancel:
+				close(in)
+				return
+			case m := <-l.Msg:
+				in <- m
+			}
 		}
-	}
-	l.Config = config
-	if l.Config.NeedToLog == nil {
-		l.Config.NeedToLog = defaultNeedToLogDeterminant
-	}
-
-	completeChan := make(chan bool)
-	in := make(chan blankMsg, config.Buffer)
-	l.Msg = in
-
-	go func(ctx context.Context, in chan blankMsg) {
-		select {
-		case <-ctx.Done():
-			close(in)
-		}
-	}(ctx, in)
-
-	go func(ch chan bool) {
-		l.logging(l.Msg)
-		completeChan <- true
-
-	}(completeChan)
-
-	return l, completeChan, nil
+	}()
+	go func() {
+		defer func() {
+			l.logDone <- true
+		}()
+		l.logging(in)
+	}()
 }
 
 func (l *Logger) logging(in chan blankMsg) {
